@@ -4,6 +4,7 @@ import React from "react";
 import { FileText, AlertTriangle, Users, Shield, Radio, Layers, Activity } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import MetricCard from "@/components/ui/MetricCard";
+import NexusContainer from "@/presentation/components/Nexus/NexusContainer";
 
 export default function Dashboard() {
   const { activeView, role } = useApp();
@@ -133,15 +134,7 @@ export default function Dashboard() {
       {/* Render based on view state */}
       {activeView === "map" && renderDashboardView()}
 
-      {activeView === "network" && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 h-[600px] flex flex-col justify-center items-center text-center shadow-lg">
-          <Activity className="w-12 h-12 text-accent-blue animate-pulse mb-4" />
-          <h2 className="text-xl font-bold text-slate-100 mb-2">NEXUS LINK ANALYZER</h2>
-          <p className="text-slate-400 max-w-md text-sm">
-            Interactive system graph mapping networks of suspect nodes, organization overlays, and association links.
-          </p>
-        </div>
-      )}
+      {activeView === "network" && <NexusContainer />}
 
       {activeView === "database" && (
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 h-[600px] flex flex-col justify-center items-center text-center shadow-lg">
