@@ -1,0 +1,11 @@
+# Root gitignore for Arachne project
+
+datathon-portal/node_modules/
+datathon-portal/.next/
+datathon-portal/out/
+datathon-portal/build/
+datathon-portal/.vercel/
+datathon-portal/npm-debug.log*
+datathon-portal/.env*
+.DS_Store
+*.pem
