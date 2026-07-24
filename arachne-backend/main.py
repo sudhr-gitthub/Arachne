@@ -1,8 +1,9 @@
 import uvicorn
+import random
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Tuple
 
 app = FastAPI(
     title="Arachne Tactical Backend",
@@ -34,6 +35,18 @@ class Edge(BaseModel):
 class GraphPayload(BaseModel):
     nodes: List[Node]
     edges: List[Edge]
+
+class Incident(BaseModel):
+    id: str = Field(..., description="Incident ID")
+    lat: float = Field(..., description="Latitude")
+    lng: float = Field(..., description="Longitude")
+    category: str = Field(..., description="Category: 'Armed Robbery', 'Cyber Fraud', 'Assault', 'Theft'")
+    time_shift: str = Field(..., description="Shift: 'Day', 'Night'")
+
+class PatrolZone(BaseModel):
+    id: str = Field(..., description="Patrol Zone ID")
+    coordinates: List[List[float]] = Field(..., description="Polygon coordinates [[lat, lng], ...]")
+    risk_level: str = Field(..., description="Risk Level: 'High', 'Critical'")
 
 # Utility mock generator
 def generate_mock_graph() -> dict:
@@ -106,10 +119,81 @@ def generate_mock_graph() -> dict:
 
     return {"nodes": nodes, "edges": edges}
 
+def generate_geo_data() -> List[dict]:
+    # Seed for reproducibility
+    random.seed(42)
+    categories = ['Armed Robbery', 'Cyber Fraud', 'Assault', 'Theft']
+    shifts = ['Day', 'Night']
+    center_lat, center_lng = 12.9716, 77.5946
+    
+    incidents = []
+    for i in range(150):
+        # Normal distribution clustering around Bangalore center (approx 1.5km std dev)
+        lat = center_lat + random.normalvariate(0, 0.015)
+        lng = center_lng + random.normalvariate(0, 0.015)
+        category = random.choice(categories)
+        shift = random.choice(shifts)
+        
+        incidents.append({
+            "id": f"INC-{1000 + i}",
+            "lat": lat,
+            "lng": lng,
+            "category": category,
+            "time_shift": shift
+        })
+    return incidents
+
+def calculate_predictive_zones(incidents: List[dict]) -> List[dict]:
+    # Simulate an ML clustering output (density bounding polygons)
+    return [
+        {
+            "id": "ZONE-ALPHA",
+            "coordinates": [
+                [12.982, 77.602],
+                [12.995, 77.615],
+                [12.985, 77.625],
+                [12.972, 77.610],
+                [12.982, 77.602]
+            ],
+            "risk_level": "Critical"
+        },
+        {
+            "id": "ZONE-BRAVO",
+            "coordinates": [
+                [12.955, 77.582],
+                [12.968, 77.595],
+                [12.952, 77.608],
+                [12.940, 77.590],
+                [12.955, 77.582]
+            ],
+            "risk_level": "High"
+        },
+        {
+            "id": "ZONE-CHARLIE",
+            "coordinates": [
+                [12.970, 77.570],
+                [12.980, 77.582],
+                [12.968, 77.590],
+                [12.958, 77.575],
+                [12.970, 77.570]
+            ],
+            "risk_level": "High"
+        }
+    ]
+
 # Endpoint
 @app.get("/api/v1/nexus/graph", response_model=GraphPayload)
 def get_nexus_graph():
     return generate_mock_graph()
+
+@app.get("/api/v1/geo/incidents", response_model=List[Incident])
+def get_geo_incidents():
+    return generate_geo_data()
+
+@app.get("/api/v1/geo/predict-patrols", response_model=List[PatrolZone])
+def get_predictive_patrols():
+    incidents = generate_geo_data()
+    return calculate_predictive_zones(incidents)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
