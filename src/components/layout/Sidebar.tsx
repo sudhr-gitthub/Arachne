@@ -1,7 +1,19 @@
+"use client";
+
 import React from "react";
 import { Map, Network, Database, Settings } from "lucide-react";
+import { useAppStore, SidebarTab } from "@/store/useAppStore";
 
 export default function Sidebar() {
+  const { activeSidebarTab, setActiveSidebarTab } = useAppStore();
+
+  const tabs: { id: SidebarTab; title: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: "Map", title: "Map View", icon: Map },
+    { id: "Network", title: "Network Graph", icon: Network },
+    { id: "Database", title: "Database Query", icon: Database },
+    { id: "Settings", title: "Settings", icon: Settings },
+  ];
+
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-16 flex-col items-center justify-between border-r glass-card py-4 text-slate-400">
       {/* Custom SVG Logo */}
@@ -21,30 +33,24 @@ export default function Sidebar() {
 
       {/* Navigation Links */}
       <nav className="flex flex-col gap-6">
-        <button
-          className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white transition-colors duration-200 cursor-pointer"
-          title="Map View"
-        >
-          <Map className="h-5 w-5" />
-        </button>
-        <button
-          className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-slate-800 hover:text-white transition-colors duration-200 cursor-pointer"
-          title="Network Graph"
-        >
-          <Network className="h-5 w-5" />
-        </button>
-        <button
-          className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-slate-800 hover:text-white transition-colors duration-200 cursor-pointer"
-          title="Database Query"
-        >
-          <Database className="h-5 w-5" />
-        </button>
-        <button
-          className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-slate-800 hover:text-white transition-colors duration-200 cursor-pointer"
-          title="Settings"
-        >
-          <Settings className="h-5 w-5" />
-        </button>
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeSidebarTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveSidebarTab(tab.id)}
+              className={`flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 cursor-pointer ${
+                isActive
+                  ? "bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-[0_0_12px_rgba(59,130,246,0.3)] border border-blue-500/20"
+                  : "hover:bg-slate-800 hover:text-white"
+              }`}
+              title={tab.title}
+            >
+              <Icon className="h-5 w-5" />
+            </button>
+          );
+        })}
       </nav>
 
       {/* Profile Placeholder */}

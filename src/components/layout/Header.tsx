@@ -1,9 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import { useAppStore, HeaderTab } from "@/store/useAppStore";
 
 export default function Header() {
-  const [role, setRole] = useState<"SHO" | "Commissioner">("SHO");
+  const { role, setRole, activeHeaderTab, setActiveHeaderTab } = useAppStore();
+
+  const handleTabClick = (e: React.MouseEvent, tab: HeaderTab) => {
+    e.preventDefault();
+    setActiveHeaderTab(tab);
+  };
 
   return (
     <header className="fixed top-0 right-0 left-16 z-30 flex h-16 items-center justify-between border-b glass-card px-6">
@@ -19,25 +25,23 @@ export default function Header() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
-          <a
-            href="#"
-            className="text-white border-b-2 border-blue-500 px-1 py-4 hover:text-white transition-colors"
-          >
-            Command
-          </a>
-          <a
-            href="#"
-            className="px-1 py-4 hover:text-white transition-colors"
-          >
-            Logistics
-          </a>
-          <a
-            href="#"
-            className="px-1 py-4 hover:text-white transition-colors"
-          >
-            Surveillance
-          </a>
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+          {(["Command", "Logistics", "Surveillance"] as HeaderTab[]).map((tab) => {
+            const isActive = activeHeaderTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={(e) => handleTabClick(e, tab)}
+                className={`px-1 py-4 transition-colors cursor-pointer ${
+                  isActive
+                    ? "text-white border-b-2 border-blue-500 font-semibold"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {tab}
+              </button>
+            );
+          })}
         </nav>
       </div>
 
