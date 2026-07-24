@@ -5,11 +5,18 @@ import { useAppStore } from "@/store/useAppStore";
 import MetricCard from "@/components/ui/MetricCard";
 import MapContainer from "@/components/Map/MapContainer";
 import NexusContainer from "@/components/Nexus/NexusContainer";
+import LogisticsView from "@/components/views/LogisticsView";
+import SurveillanceView from "@/components/views/SurveillanceView";
+import ComingSoonModal from "@/components/ui/ComingSoonModal";
 
 export default function Home() {
   const { role, activeHeaderTab, activeSidebarTab } = useAppStore();
 
   const isCommandMapActive = activeHeaderTab === "Command" && activeSidebarTab === "Map";
+  const isLogisticsActive = activeHeaderTab === "Logistics";
+  const isSurveillanceActive = activeHeaderTab === "Surveillance";
+
+  const showModal = activeSidebarTab === "Database" || activeSidebarTab === "Settings";
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -42,8 +49,8 @@ export default function Home() {
         />
       </div>
 
-      {/* Main Content Grid (Conditional) */}
-      {isCommandMapActive ? (
+      {/* Main Views Area */}
+      {isCommandMapActive && (
         <div className="grid grid-cols-10 gap-6 min-h-[650px]">
           {/* Left Column: Map */}
           <div className="col-span-6 flex flex-col">
@@ -122,7 +129,13 @@ export default function Home() {
             </div>
           </div>
         </div>
-      ) : (
+      )}
+
+      {isLogisticsActive && <LogisticsView />}
+      {isSurveillanceActive && <SurveillanceView />}
+
+      {/* Fallback Initializing View when not in Command Map, Logistics, or Surveillance */}
+      {!isCommandMapActive && !isLogisticsActive && !isSurveillanceActive && (
         <div className="flex flex-col items-center justify-center min-h-[650px] glass-card rounded-xl border border-slate-800 p-8 text-center relative overflow-hidden">
           {/* Cybernetic grid background effect */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
@@ -161,6 +174,9 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Database/Settings Clearance Modal Overlay */}
+      {showModal && <ComingSoonModal />}
     </div>
   );
 }
