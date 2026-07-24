@@ -1,7 +1,7 @@
 import React from "react";
 import MetricCard from "@/components/ui/MetricCard";
 import TacticalMap from "@/components/dashboard/TacticalMap";
-import NexusLinkAnalyzer from "@/components/dashboard/NexusLinkAnalyzer";
+import NexusContainer from "@/components/Nexus/NexusContainer";
 
 export default function Home() {
   return (
@@ -46,7 +46,7 @@ export default function Home() {
         <div className="col-span-4 flex flex-col gap-6">
           {/* Top Half: Nexus Link Analyzer */}
           <div className="flex-1 min-h-[300px]">
-            <NexusLinkAnalyzer />
+            <NexusContainer />
           </div>
 
           {/* Bottom Half: Recent Alerts Table */}

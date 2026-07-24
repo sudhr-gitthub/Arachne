@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { GraphPayload } from "@/services/api/nexusApi";
+import { GraphPayload, GraphNode } from "@/services/api/nexusApi";
 
 // Dynamically import ForceGraph2D with SSR disabled to prevent hydration errors
 const ForceGraph2D = dynamic(
@@ -12,15 +12,47 @@ const ForceGraph2D = dynamic(
 
 interface GraphRendererProps {
   data: GraphPayload;
+  selectedNode: GraphNode | null;
+  onNodeClick: (node: GraphNode | null) => void;
   width?: number;
   height?: number;
 }
 
-export default function GraphRenderer({ data, width, height }: GraphRendererProps) {
+export default function GraphRenderer({
+  data,
+  selectedNode,
+  onNodeClick,
+  width,
+  height,
+}: GraphRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 400, height: 300 });
 
-  // Handle resizing to fill parent container if explicit dimensions are not provided
+  // Calculate immediate neighbors when selectedNode is active
+  const neighbors = useMemo(() => {
+    const set = new Set<string>();
+    if (selectedNode) {
+      set.add(selectedNode.id);
+      data.edges.forEach((edge) => {
+        if (edge.source === selectedNode.id) {
+          set.add(edge.target);
+        } else if (edge.target === selectedNode.id) {
+          set.add(edge.source);
+        }
+      });
+    }
+    return set;
+  }, [selectedNode, data.edges]);
+
+  // Check if link is connected to selectedNode
+  const isLinkConnected = (link: any) => {
+    if (!selectedNode) return true;
+    const sourceId = typeof link.source === "object" ? link.source.id : link.source;
+    const targetId = typeof link.target === "object" ? link.target.id : link.target;
+    return sourceId === selectedNode.id || targetId === selectedNode.id;
+  };
+
+  // Adjust dimensions
   useEffect(() => {
     if (width && height) {
       setDimensions({ width, height });
@@ -39,9 +71,8 @@ export default function GraphRenderer({ data, width, height }: GraphRendererProp
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [width, height]);
+  }, [width, height, selectedNode]);
 
-  // Format the data for react-force-graph (maps 'edges' to 'links')
   const formattedData = {
     nodes: data.nodes.map((n) => ({ ...n })),
     links: data.edges.map((e) => ({
@@ -52,12 +83,20 @@ export default function GraphRenderer({ data, width, height }: GraphRendererProp
   };
 
   return (
-    <div ref={containerRef} className="w-full h-full min-h-[300px]">
+    <div ref={containerRef} className="w-full h-full min-h-[300px] relative">
       <ForceGraph2D
         graphData={formattedData}
         width={dimensions.width}
         height={dimensions.height}
         backgroundColor="rgba(0, 0, 0, 0)"
+        onNodeClick={(node: any) => {
+          if (selectedNode && selectedNode.id === node.id) {
+            onNodeClick(null);
+          } else {
+            onNodeClick(node as GraphNode);
+          }
+        }}
+        onBackgroundClick={() => onNodeClick(null)}
         nodeVal={(node: any) => Math.max(3, node.risk_score / 15)}
         nodeColor={(node: any) => {
           const group = node.group;
@@ -71,6 +110,10 @@ export default function GraphRenderer({ data, width, height }: GraphRendererProp
           const group = node.group;
           const risk = node.risk_score || 0;
 
+          // Blast radius opacity logic: 1.0 if highlighted (neighbor or selected), else 0.15
+          const isHighlighted = !selectedNode || neighbors.has(node.id);
+          ctx.globalAlpha = isHighlighted ? 1.0 : 0.15;
+
           // Node color mapping
           let color = "#64748b";
           if (group === 1) color = "#ef4444";
@@ -80,7 +123,7 @@ export default function GraphRenderer({ data, width, height }: GraphRendererProp
           const size = Math.max(3, risk / 15);
 
           // Draw outer glowing halo for critical risks
-          if (risk > 75) {
+          if (risk > 75 && isHighlighted) {
             ctx.beginPath();
             ctx.arc(node.x, node.y, size + 3, 0, 2 * Math.PI, false);
             ctx.fillStyle = group === 1 ? "rgba(239, 68, 68, 0.15)" : "rgba(59, 130, 246, 0.15)";
@@ -92,33 +135,42 @@ export default function GraphRenderer({ data, width, height }: GraphRendererProp
           ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false);
           ctx.fillStyle = color;
           ctx.fill();
-          ctx.strokeStyle = "#0b1326";
-          ctx.lineWidth = 1.5;
+
+          // Draw selected border highlight
+          const isSelected = selectedNode?.id === node.id;
+          ctx.strokeStyle = isSelected ? "#ffffff" : "#0b1326";
+          ctx.lineWidth = isSelected ? 2.5 : 1.5;
           ctx.stroke();
 
-          // Draw text labels displaying the label property
-          const labelText = label.split(" (")[0]; // Clean label representation
+          // Draw text labels
+          const labelText = label.split(" (")[0];
           ctx.font = `${8 / globalScale + 3}px JetBrains Mono, monospace`;
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillStyle = "#dae2fd";
+          ctx.fillStyle = isHighlighted ? "#dae2fd" : "rgba(218, 226, 253, 0.25)";
 
-          // Text shadow outline
+          // Text shadow
           ctx.shadowColor = "#0b1326";
           ctx.shadowBlur = 3;
 
           ctx.fillText(labelText, node.x, node.y + size + 7);
-          ctx.shadowBlur = 0; // Reset shadow
+          ctx.shadowBlur = 0;
+          ctx.globalAlpha = 1.0; // Reset canvas alpha
         }}
-        linkColor={() => "#334155"}
-        linkWidth={1.5}
+        linkColor={(link: any) => {
+          return isLinkConnected(link) ? "#334155" : "rgba(51, 65, 85, 0.15)";
+        }}
+        linkWidth={(link: any) => {
+          return isLinkConnected(link) ? 1.5 : 0.5;
+        }}
         linkDirectionalArrowLength={4}
         linkDirectionalArrowRelPos={0.5}
-        linkDirectionalParticles={2}
+        linkDirectionalParticles={(link: any) => {
+          return isLinkConnected(link) ? 2 : 0;
+        }}
         linkDirectionalParticleSpeed={0.005}
         linkDirectionalParticleWidth={2}
         linkDirectionalParticleColor={(link: any) => {
-          // Color flow particles based on connection relationship
           if (link.relationship === "Called") return "#3b82f6";
           if (link.relationship === "Drives") return "#eab308";
           return "#64748b";
