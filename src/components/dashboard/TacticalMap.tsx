@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Maximize2, ZoomIn, ZoomOut, Compass, ShieldAlert } from "lucide-react";
+import { Maximize2, ZoomIn, ZoomOut, Compass } from "lucide-react";
 
 export default function TacticalMap() {
   const [zoom, setZoom] = useState(100);

@@ -7,6 +7,10 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.heat";
 import { Incident, PatrolZone } from "@/services/api/geoApi";
 
+interface HeatLayerCreator {
+  heatLayer: (points: number[][], options: Record<string, unknown>) => L.Layer;
+}
+
 interface HeatmapLayerProps {
   incidents: Incident[];
 }
@@ -17,10 +21,10 @@ function HeatmapLayer({ incidents }: HeatmapLayerProps) {
   useEffect(() => {
     if (!map) return;
 
-    // Remove existing layers to redraw if incidents change
     const points = incidents.map((inc) => [inc.lat, inc.lng]);
 
-    const heatLayer = (L as any).heatLayer(points, {
+    // Cast L using helper interface instead of 'any' to avoid explicit-any warning
+    const heatLayer = (L as unknown as HeatLayerCreator).heatLayer(points, {
       radius: 20,
       blur: 15,
       maxZoom: 17,

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { Incident, PatrolZone, fetchIncidents, fetchPatrolZones } from "@/services/api/geoApi";
-import { Filter, Calendar, Activity, Zap, Play } from "lucide-react";
+import { Filter, Calendar, Activity, Zap } from "lucide-react";
 
 // Dynamically import MapRenderer to prevent SSR/window errors
 const MapRenderer = dynamic(() => import("./MapRenderer"), {
@@ -18,12 +18,10 @@ const MapRenderer = dynamic(() => import("./MapRenderer"), {
 
 export default function MapContainer() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [filteredIncidents, setFilteredIncidents] = useState<Incident[]>([]);
   const [patrolZones, setPatrolZones] = useState<PatrolZone[]>([]);
   const [showPredictiveZones, setShowPredictiveZones] = useState<boolean>(false);
   const [loadingZones, setLoadingZones] = useState<boolean>(false);
   const [errorState, setErrorState] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
 
   const [filters, setFilters] = useState({
     category: "All",
@@ -58,8 +56,8 @@ export default function MapContainer() {
         id: `INC-${1000 + i}`,
         lat,
         lng,
-        category: category as any,
-        time_shift: shift as any,
+        category: category as Incident["category"],
+        time_shift: shift as Incident["time_shift"],
       });
     }
     return list;
@@ -109,7 +107,7 @@ export default function MapContainer() {
         const data = await fetchIncidents();
         setIncidents(data);
         setErrorState(null);
-      } catch (err) {
+      } catch {
         console.warn("Backend geo API offline. Triggering client-side fallback telemetry data.");
         const fallbackData = generateLocalMockIncidents();
         setIncidents(fallbackData);
@@ -119,8 +117,8 @@ export default function MapContainer() {
     loadIncidents();
   }, []);
 
-  // Filter incidents when filters or incidents change
-  useEffect(() => {
+  // Compute filtered incidents dynamically to avoid setState in effect
+  const filteredIncidents = useMemo(() => {
     let filtered = incidents;
     if (filters.category !== "All") {
       filtered = filtered.filter((inc) => inc.category === filters.category);
@@ -128,7 +126,7 @@ export default function MapContainer() {
     if (filters.timeShift !== "All") {
       filtered = filtered.filter((inc) => inc.time_shift === filters.timeShift);
     }
-    setFilteredIncidents(filtered);
+    return filtered;
   }, [filters, incidents]);
 
   // Run ML patrol predictions
@@ -148,7 +146,7 @@ export default function MapContainer() {
       const data = await fetchPatrolZones();
       setPatrolZones(data);
       setShowPredictiveZones(true);
-    } catch (err) {
+    } catch {
       console.warn("Patrol zones fetching failed. Loading mock ML patrol zones.");
       setPatrolZones(fallbackPatrolZones);
       setShowPredictiveZones(true);
@@ -243,6 +241,11 @@ export default function MapContainer() {
           </button>
         </div>
       </div>
+      {errorState === "offline" && (
+        <div className="absolute bottom-2 left-2 z-[1000] text-[8px] font-mono text-amber-500 bg-slate-950/80 px-2 py-0.5 rounded border border-amber-500/20">
+          OFFLINE CACHE ACTIVE
+        </div>
+      )}
     </div>
   );
 }

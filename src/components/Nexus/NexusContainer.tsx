@@ -5,58 +5,58 @@ import { GraphPayload, GraphNode, fetchNexusGraph } from "@/services/api/nexusAp
 import GraphRenderer from "./GraphRenderer";
 import { Shield, Phone, Car, FileText, AlertTriangle, Eye, Info, X } from "lucide-react";
 
+// Move fallback graph data outside of the component scope to avoid hook dependency triggers
+const fallbackGraphData: GraphPayload = {
+  nodes: [
+    { id: "S1", label: "Vikram Malhotra (Main Suspect)", group: 1, risk_score: 95.5 },
+    { id: "S2", label: "Amit Shah (Associate)", group: 1, risk_score: 78.2 },
+    { id: "S3", label: "Rohan Joshi (Under Surveillance)", group: 1, risk_score: 62.0 },
+    { id: "S4", label: "Karan Singhal (Logistics)", group: 1, risk_score: 48.1 },
+    { id: "S5", label: "Sanjay Dutt (Informant/Suspect)", group: 1, risk_score: 55.4 },
+    { id: "P1", label: "+91 98765 43210 (Malhotra Burner)", group: 2, risk_score: 85.0 },
+    { id: "P2", label: "+91 87654 32109 (Malhotra Personal)", group: 2, risk_score: 45.0 },
+    { id: "P3", label: "+91 76543 21098 (Shah Burner)", group: 2, risk_score: 80.0 },
+    { id: "P4", label: "+91 65432 10987 (Joshi Burner)", group: 2, risk_score: 60.0 },
+    { id: "P5", label: "+91 54321 09876 (Dutt Burner)", group: 2, risk_score: 50.0 },
+    { id: "V1", label: "KA-51-MD-9876 (Black SUV)", group: 3, risk_score: 90.0 },
+    { id: "V2", label: "MH-12-AS-1284 (White Sedan)", group: 3, risk_score: 68.5 },
+    { id: "V3", label: "DL-03-KS-4242 (Delivery Van)", group: 3, risk_score: 35.0 },
+    { id: "F1", label: "FIR-2026/89 (Smuggling)", group: 4, risk_score: 92.0 },
+    { id: "F2", label: "FIR-2026/102 (Conspiracy)", group: 4, risk_score: 75.0 },
+    { id: "F3", label: "FIR-2026/145 (Extortion)", group: 4, risk_score: 58.0 },
+    { id: "F4", label: "FIR-2026/188 (Cargo Theft)", group: 4, risk_score: 40.0 },
+  ],
+  edges: [
+    { source: "S1", target: "P1", relationship: "Called" },
+    { source: "S1", target: "P2", relationship: "Called" },
+    { source: "S1", target: "V1", relationship: "Drives" },
+    { source: "S1", target: "F1", relationship: "Mentioned In" },
+    { source: "S1", target: "F2", relationship: "Mentioned In" },
+    { source: "S2", target: "P3", relationship: "Called" },
+    { source: "S2", target: "V2", relationship: "Drives" },
+    { source: "S2", target: "F1", relationship: "Mentioned In" },
+    { source: "S2", target: "P1", relationship: "Called" },
+    { source: "S1", target: "P3", relationship: "Called" },
+    { source: "P2", target: "P3", relationship: "Called" },
+    { source: "S3", target: "P4", relationship: "Called" },
+    { source: "S3", target: "F3", relationship: "Mentioned In" },
+    { source: "S3", target: "P3", relationship: "Called" },
+    { source: "S4", target: "V3", relationship: "Drives" },
+    { source: "S4", target: "F4", relationship: "Mentioned In" },
+    { source: "S4", target: "P4", relationship: "Called" },
+    { source: "S5", target: "P5", relationship: "Called" },
+    { source: "S5", target: "F2", relationship: "Mentioned In" },
+    { source: "S5", target: "P1", relationship: "Called" },
+    { source: "V1", target: "F1", relationship: "Mentioned In" },
+    { source: "V2", target: "F3", relationship: "Mentioned In" },
+  ],
+};
+
 export default function NexusContainer() {
   const [graphData, setGraphData] = useState<GraphPayload | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorState, setErrorState] = useState<string | null>(null);
-
-  // Fallback mock graph data in case backend server is not running
-  const fallbackGraphData: GraphPayload = {
-    nodes: [
-      { id: "S1", label: "Vikram Malhotra (Main Suspect)", group: 1, risk_score: 95.5 },
-      { id: "S2", label: "Amit Shah (Associate)", group: 1, risk_score: 78.2 },
-      { id: "S3", label: "Rohan Joshi (Under Surveillance)", group: 1, risk_score: 62.0 },
-      { id: "S4", label: "Karan Singhal (Logistics)", group: 1, risk_score: 48.1 },
-      { id: "S5", label: "Sanjay Dutt (Informant/Suspect)", group: 1, risk_score: 55.4 },
-      { id: "P1", label: "+91 98765 43210 (Malhotra Burner)", group: 2, risk_score: 85.0 },
-      { id: "P2", label: "+91 87654 32109 (Malhotra Personal)", group: 2, risk_score: 45.0 },
-      { id: "P3", label: "+91 76543 21098 (Shah Burner)", group: 2, risk_score: 80.0 },
-      { id: "P4", label: "+91 65432 10987 (Joshi Burner)", group: 2, risk_score: 60.0 },
-      { id: "P5", label: "+91 54321 09876 (Dutt Burner)", group: 2, risk_score: 50.0 },
-      { id: "V1", label: "KA-51-MD-9876 (Black SUV)", group: 3, risk_score: 90.0 },
-      { id: "V2", label: "MH-12-AS-1284 (White Sedan)", group: 3, risk_score: 68.5 },
-      { id: "V3", label: "DL-03-KS-4242 (Delivery Van)", group: 3, risk_score: 35.0 },
-      { id: "F1", label: "FIR-2026/89 (Smuggling)", group: 4, risk_score: 92.0 },
-      { id: "F2", label: "FIR-2026/102 (Conspiracy)", group: 4, risk_score: 75.0 },
-      { id: "F3", label: "FIR-2026/145 (Extortion)", group: 4, risk_score: 58.0 },
-      { id: "F4", label: "FIR-2026/188 (Cargo Theft)", group: 4, risk_score: 40.0 },
-    ],
-    edges: [
-      { source: "S1", target: "P1", relationship: "Called" },
-      { source: "S1", target: "P2", relationship: "Called" },
-      { source: "S1", target: "V1", relationship: "Drives" },
-      { source: "S1", target: "F1", relationship: "Mentioned In" },
-      { source: "S1", target: "F2", relationship: "Mentioned In" },
-      { source: "S2", target: "P3", relationship: "Called" },
-      { source: "S2", target: "V2", relationship: "Drives" },
-      { source: "S2", target: "F1", relationship: "Mentioned In" },
-      { source: "S2", target: "P1", relationship: "Called" },
-      { source: "S1", target: "P3", relationship: "Called" },
-      { source: "P2", target: "P3", relationship: "Called" },
-      { source: "S3", target: "P4", relationship: "Called" },
-      { source: "S3", target: "F3", relationship: "Mentioned In" },
-      { source: "S3", target: "P3", relationship: "Called" },
-      { source: "S4", target: "V3", relationship: "Drives" },
-      { source: "S4", target: "F4", relationship: "Mentioned In" },
-      { source: "S4", target: "P4", relationship: "Called" },
-      { source: "S5", target: "P5", relationship: "Called" },
-      { source: "S5", target: "F2", relationship: "Mentioned In" },
-      { source: "S5", target: "P1", relationship: "Called" },
-      { source: "V1", target: "F1", relationship: "Mentioned In" },
-      { source: "V2", target: "F3", relationship: "Mentioned In" },
-    ],
-  };
 
   useEffect(() => {
     async function loadData() {
@@ -65,7 +65,7 @@ export default function NexusContainer() {
         const data = await fetchNexusGraph();
         setGraphData(data);
         setErrorState(null);
-      } catch (err) {
+      } catch {
         console.warn("Backend API not reachable. Switching to client-side fallback graph data.");
         setGraphData(fallbackGraphData);
         setErrorState("offline-fallback");
