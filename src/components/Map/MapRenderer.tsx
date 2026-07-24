@@ -2,26 +2,24 @@
 
 import React, { useEffect } from "react";
 import L from "leaflet";
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import { MapContainer as LeafletMapContainer, TileLayer, Polygon, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.heat";
-import { Incident } from "@/services/api/geoApi";
+import { Incident, PatrolZone } from "@/services/api/geoApi";
 
 interface HeatmapLayerProps {
   incidents: Incident[];
 }
 
-// Child component to handle leaflet map instance access via useMap
 function HeatmapLayer({ incidents }: HeatmapLayerProps) {
   const map = useMap();
 
   useEffect(() => {
-    if (!map || incidents.length === 0) return;
+    if (!map) return;
 
-    // Map incidents to [lat, lng] array
+    // Remove existing layers to redraw if incidents change
     const points = incidents.map((inc) => [inc.lat, inc.lng]);
 
-    // Create the heat layer using leaflet.heat plugin
     const heatLayer = (L as any).heatLayer(points, {
       radius: 20,
       blur: 15,
@@ -37,7 +35,6 @@ function HeatmapLayer({ incidents }: HeatmapLayerProps) {
 
     heatLayer.addTo(map);
 
-    // Clean up layer on unmount or when incidents update
     return () => {
       map.removeLayer(heatLayer);
     };
@@ -48,12 +45,18 @@ function HeatmapLayer({ incidents }: HeatmapLayerProps) {
 
 interface MapRendererProps {
   incidents: Incident[];
+  showPredictiveZones: boolean;
+  patrolZones: PatrolZone[];
 }
 
-export default function MapRenderer({ incidents }: MapRendererProps) {
+export default function MapRenderer({
+  incidents,
+  showPredictiveZones,
+  patrolZones,
+}: MapRendererProps) {
   return (
-    <div className="w-full h-full min-h-[400px] relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
-      <MapContainer
+    <div className="w-full h-full relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+      <LeafletMapContainer
         center={[12.9716, 77.5946]}
         zoom={12}
         className="w-full h-full"
@@ -64,7 +67,22 @@ export default function MapRenderer({ incidents }: MapRendererProps) {
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
         <HeatmapLayer incidents={incidents} />
-      </MapContainer>
+
+        {showPredictiveZones &&
+          patrolZones.map((zone) => (
+            <Polygon
+              key={zone.id}
+              positions={zone.coordinates}
+              pathOptions={{
+                color: "#ef4444",
+                dashArray: "5, 5",
+                fillColor: "#ef4444",
+                fillOpacity: 0.25,
+                weight: 2,
+              }}
+            />
+          ))}
+      </LeafletMapContainer>
     </div>
   );
 }

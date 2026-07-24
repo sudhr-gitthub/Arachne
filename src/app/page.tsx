@@ -1,6 +1,6 @@
 import React from "react";
 import MetricCard from "@/components/ui/MetricCard";
-import TacticalMap from "@/components/dashboard/TacticalMap";
+import MapContainer from "@/components/Map/MapContainer";
 import NexusContainer from "@/components/Nexus/NexusContainer";
 
 export default function Home() {
@@ -39,7 +39,7 @@ export default function Home() {
       <div className="grid grid-cols-10 gap-6 min-h-[650px]">
         {/* Left Column: Map */}
         <div className="col-span-6 flex flex-col">
-          <TacticalMap />
+          <MapContainer />
         </div>
 
         {/* Right Column: Link Analyzer & Recent Alerts */}
