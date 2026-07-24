@@ -20,6 +20,8 @@ export default function MapContainer() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [patrolZones, setPatrolZones] = useState<PatrolZone[]>([]);
   const [showPredictiveZones, setShowPredictiveZones] = useState<boolean>(false);
+  const [showCCTV, setShowCCTV] = useState<boolean>(false);
+  const [showUnits, setShowUnits] = useState<boolean>(false);
   const [loadingZones, setLoadingZones] = useState<boolean>(false);
   const [errorState, setErrorState] = useState<string | null>(null);
 
@@ -163,6 +165,8 @@ export default function MapContainer() {
           incidents={filteredIncidents}
           showPredictiveZones={showPredictiveZones}
           patrolZones={patrolZones}
+          showCCTV={showCCTV}
+          showUnits={showUnits}
         />
       </div>
 
@@ -218,6 +222,33 @@ export default function MapContainer() {
                 {shift}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Layer Visibility Controls */}
+        <div className="flex flex-col gap-2 border-t border-slate-800/80 pt-3">
+          <label className="text-[10px] uppercase font-mono tracking-widest text-slate-500 flex items-center gap-1 mb-1">
+            Active Overlays
+          </label>
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2 text-xs text-slate-300 font-semibold cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showCCTV}
+                onChange={(e) => setShowCCTV(e.target.checked)}
+                className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900"
+              />
+              <span>CCTV Locations</span>
+            </label>
+            <label className="flex items-center gap-2 text-xs text-slate-300 font-semibold cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showUnits}
+                onChange={(e) => setShowUnits(e.target.checked)}
+                className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900"
+              />
+              <span>Active Patrol Units</span>
+            </label>
           </div>
         </div>
 

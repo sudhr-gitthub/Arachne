@@ -17,27 +17,27 @@ export default function Home() {
       <div className="grid grid-cols-4 gap-6">
         <MetricCard
           title="Active FIRs"
-          value="1,284"
-          trend="+12%"
+          value={role === "SHO" ? "142" : "1,284"}
+          trend={role === "SHO" ? "+4%" : "+12%"}
           trendLabel="vs last week"
         />
         <MetricCard
           title="High-Risk Zones"
-          value="08"
-          trend="+2"
+          value={role === "SHO" ? "02" : "08"}
+          trend={role === "SHO" ? "+0" : "+2"}
           trendLabel="new threat zones"
           isAlert={true}
         />
         <MetricCard
           title="Flagged Entities"
-          value="42"
-          trend="-4%"
+          value={role === "SHO" ? "12" : "42"}
+          trend={role === "SHO" ? "-2%" : "-4%"}
           trendLabel="resolved today"
         />
         <MetricCard
           title="Patrol Units Active"
-          value="156"
-          trend="94%"
+          value={role === "SHO" ? "18" : "156"}
+          trend={role === "SHO" ? "88%" : "94%"}
           trendLabel="efficiency level"
         />
       </div>
