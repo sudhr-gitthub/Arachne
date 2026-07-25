@@ -1,0 +1,13 @@
+{
+  "project_name": "Arachne",
+  "appsail": [
+    {
+      "name": "arachne-frontend",
+      "source": "."
+    },
+    {
+      "name": "arachne-backend",
+      "source": "arachne-backend"
+    }
+  ]
+}

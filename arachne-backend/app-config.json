@@ -1,0 +1,11 @@
+{
+  "name": "arachne-backend",
+  "command": "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000",
+  "stack": "python3.11",
+  "memory": 512,
+  "env_variables": {
+    "DATABASE_URL": "sqlite:////app/data/arachne.db",
+    "SECRET_KEY": "7d264e1d93bdf5c829e1c258d4a974ea487a55be62db94d1f2a36b56b9c97210",
+    "ALLOWED_ORIGINS": "http://localhost:3000,http://localhost:3001"
+  }
+}

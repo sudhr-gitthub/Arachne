@@ -1,0 +1,9 @@
+{
+  "name": "arachne-frontend",
+  "command": "npm run start",
+  "stack": "nodejs20",
+  "memory": 512,
+  "env_variables": {
+    "NEXT_PUBLIC_API_URL": "http://localhost:8000"
+  }
+}
