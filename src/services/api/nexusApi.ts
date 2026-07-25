@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/services/api/config";
 export interface GraphNode {
   id: string;
   label: string;
@@ -18,7 +19,7 @@ export interface GraphPayload {
 
 export async function fetchNexusGraph(): Promise<GraphPayload> {
   try {
-    const response = await fetch("http://localhost:8000/api/v1/nexus/graph", {
+    const response = await fetch(`${API_BASE_URL}/api/v1/nexus/graph`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

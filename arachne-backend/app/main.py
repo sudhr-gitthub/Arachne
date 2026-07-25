@@ -19,7 +19,7 @@ app = FastAPI(
 )
 
 # Parse allowed origins from environment
-allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001")
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001,https://arachne-katqrxyd.onslate.in")
 allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
 
 # Register security and rate limiting middlewares (OWASP best practices)

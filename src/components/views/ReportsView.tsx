@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api/config";
+
 
 import React, { useState, useEffect } from "react";
 import { useAppStore } from "@/store/useAppStore";
@@ -72,7 +74,7 @@ export default function ReportsView() {
     setLoading(true);
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-      const res = await fetch("http://localhost:8000/api/v1/reports", { headers });
+      const res = await fetch(`${API_BASE_URL}/api/v1/reports`, { headers });
       if (res.ok) {
         const data = await res.json();
         setReports(data);
@@ -87,7 +89,7 @@ export default function ReportsView() {
   const fetchStats = async () => {
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-      const res = await fetch("http://localhost:8000/api/v1/analytics/dashboard", { headers });
+      const res = await fetch(`${API_BASE_URL}/api/v1/analytics/dashboard`, { headers });
       if (res.ok) {
         const data = await res.json();
         setStats(data);
@@ -100,7 +102,7 @@ export default function ReportsView() {
   const fetchSchedules = async () => {
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-      const res = await fetch("http://localhost:8000/api/v1/reports/schedules", { headers });
+      const res = await fetch(`${API_BASE_URL}/api/v1/reports/schedules`, { headers });
       if (res.ok) {
         const data = await res.json();
         setSchedules(data);
@@ -117,7 +119,7 @@ export default function ReportsView() {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       };
-      const res = await fetch("http://localhost:8000/api/v1/ai/insights/chat", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/ai/insights/chat`, {
         method: "POST",
         headers,
         body: JSON.stringify({ query: "Generate executive summaries" })
@@ -147,7 +149,7 @@ export default function ReportsView() {
     setDownloading(format);
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-      const res = await fetch(`http://localhost:8000/api/v1/reports/download/${format}`, { headers });
+      const res = await fetch(`{API_BASE_URL}/api/v1/reports/download/${format}`, { headers });
       if (!res.ok) throw new Error("File generation failed");
       
       const blob = await res.blob();
@@ -176,7 +178,7 @@ export default function ReportsView() {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       };
-      const res = await fetch("http://localhost:8000/api/v1/reports", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/reports`, {
         method: "POST",
         headers,
         body: JSON.stringify({ title, content })
@@ -206,7 +208,7 @@ export default function ReportsView() {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       };
-      const res = await fetch("http://localhost:8000/api/v1/reports/share", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/reports/share`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -239,7 +241,7 @@ export default function ReportsView() {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       };
-      const res = await fetch("http://localhost:8000/api/v1/reports/schedules", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/reports/schedules`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -268,7 +270,7 @@ export default function ReportsView() {
   const handleDeleteSchedule = async (id: string) => {
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-      const res = await fetch(`http://localhost:8000/api/v1/reports/schedules/${id}`, {
+      const res = await fetch(`{API_BASE_URL}/api/v1/reports/schedules/${id}`, {
         method: "DELETE",
         headers
       });

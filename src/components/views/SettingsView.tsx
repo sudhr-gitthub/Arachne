@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api/config";
+
 
 import React, { useState, useEffect } from "react";
 import { useAppStore, Role } from "@/store/useAppStore";
@@ -20,7 +22,7 @@ export default function SettingsView() {
     const startTime = performance.now();
     try {
       // Test API latency & connectivity
-      const res = await fetch("http://localhost:8000/api/v1/auth/me", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
         method: "GET",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -35,7 +37,7 @@ export default function SettingsView() {
       }
 
       // Test ML predict endpoint
-      const mlRes = await fetch("http://localhost:8000/api/v1/geo/predict-patrols", { method: "GET" });
+      const mlRes = await fetch(`${API_BASE_URL}/api/v1/geo/predict-patrols`, { method: "GET" });
       if (mlRes.ok) {
         setMlStatus("OPERATIONAL (DBSCAN CLUSTERING)");
       } else {
@@ -43,8 +45,8 @@ export default function SettingsView() {
       }
 
       // Gather collection count info
-      const graphRes = await fetch("http://localhost:8000/api/v1/nexus/graph");
-      const incRes = await fetch("http://localhost:8000/api/v1/geo/incidents");
+      const graphRes = await fetch(`${API_BASE_URL}/api/v1/nexus/graph`);
+      const incRes = await fetch(`${API_BASE_URL}/api/v1/geo/incidents`);
       if (graphRes.ok && incRes.ok) {
         const graphData = await graphRes.json();
         const incData = await incRes.json();
@@ -70,7 +72,7 @@ export default function SettingsView() {
     setUpdating(true);
     setStatusMsg(null);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/auth/role", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/role`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -191,7 +193,7 @@ export default function SettingsView() {
           
           <div className="flex justify-between items-center py-1.5 border-b border-slate-900">
             <span className="text-slate-500 uppercase">TACTICAL ENDPOINT</span>
-            <span className="text-slate-200">http://localhost:8000/api/v1</span>
+            <span className="text-slate-200">{API_BASE_URL}/api/v1</span>
           </div>
 
           <div className="flex justify-between items-center py-1.5 border-b border-slate-900">

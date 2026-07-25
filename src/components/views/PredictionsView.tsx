@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api/config";
+
 
 import React, { useState, useEffect } from "react";
 import { useAppStore } from "@/store/useAppStore";
@@ -75,7 +77,7 @@ export default function PredictionsView() {
   const fetchHistory = async () => {
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-      const res = await fetch("http://localhost:8000/api/v1/predictions/history?limit=8", { headers });
+      const res = await fetch(`${API_BASE_URL}/api/v1/predictions/history?limit=8`, { headers });
       if (res.ok) {
         const data = await res.json();
         setHistory(data);
@@ -89,7 +91,7 @@ export default function PredictionsView() {
     setRunningHotspots(true);
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-      const res = await fetch(`http://localhost:8000/api/v1/predictions/patrols?eps=${eps}&min_samples=${minSamples}`, { headers });
+      const res = await fetch(`{API_BASE_URL}/api/v1/predictions/patrols?eps=${eps}&min_samples=${minSamples}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setHotspots(data);
@@ -107,7 +109,7 @@ export default function PredictionsView() {
     setTrainingMetrics(null);
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-      const res = await fetch("http://localhost:8000/api/v1/predictions/train", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/predictions/train`, {
         method: "POST",
         headers
       });
@@ -136,7 +138,7 @@ export default function PredictionsView() {
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       };
       
-      const res = await fetch("http://localhost:8000/api/v1/predictions/predict", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/predictions/predict`, {
         method: "POST",
         headers,
         body: JSON.stringify({

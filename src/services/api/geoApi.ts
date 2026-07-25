@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/services/api/config";
 export interface Incident {
   id: string;
   lat: number;
@@ -55,7 +56,7 @@ export async function fetchIncidents(filters?: {
       headers["Authorization"] = `Bearer ${filters.token}`;
     }
 
-    const response = await fetch(`http://localhost:8000/api/v1/geo/incidents${queryParams}`, {
+    const response = await fetch(`{API_BASE_URL}/api/v1/geo/incidents${queryParams}`, {
       method: "GET",
       headers,
       next: { revalidate: 0 },
@@ -103,7 +104,7 @@ export async function fetchPatrolZones(
       `n_clusters=${nClusters}`,
       `min_cluster_size=${minClusterSize}`
     ];
-    const response = await fetch(`http://localhost:8000/api/v1/geo/predict-patrols?${parts.join("&")}`, {
+    const response = await fetch(`{API_BASE_URL}/api/v1/geo/predict-patrols?${parts.join("&")}`, {
       method: "GET",
       headers,
       next: { revalidate: 0 },
@@ -127,7 +128,7 @@ export async function fetchDistricts(token?: string | null): Promise<District[]>
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
-    const response = await fetch("http://localhost:8000/api/v1/districts", { headers });
+    const response = await fetch(`${API_BASE_URL}/api/v1/districts`, { headers });
     if (!response.ok) throw new Error("Failed to fetch districts");
     return await response.json();
   } catch (err) {
@@ -142,7 +143,7 @@ export async function fetchStations(token?: string | null): Promise<Station[]> {
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
-    const response = await fetch("http://localhost:8000/api/v1/districts/stations", { headers });
+    const response = await fetch(`${API_BASE_URL}/api/v1/districts/stations`, { headers });
     if (!response.ok) throw new Error("Failed to fetch stations");
     return await response.json();
   } catch (err) {

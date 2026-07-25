@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api/config";
+
 
 import React, { useState, useEffect } from "react";
 import { useAppStore } from "@/store/useAppStore";
@@ -23,7 +25,7 @@ export default function AnalyticsView() {
     setLoading(true);
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-      const res = await fetch("http://localhost:8000/api/v1/analytics/trends", { headers });
+      const res = await fetch(`${API_BASE_URL}/api/v1/analytics/trends`, { headers });
       if (res.ok) {
         const data = await res.json();
         setTrends(data);

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/services/api/config";
 export interface UserResponse {
   id: string;
   email: string;
@@ -15,7 +16,7 @@ export async function loginUser(email: string, password: string): Promise<TokenR
   params.append("username", email);
   params.append("password", password);
 
-  const response = await fetch("http://localhost:8000/api/v1/auth/token", {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -32,7 +33,7 @@ export async function loginUser(email: string, password: string): Promise<TokenR
 }
 
 export async function registerUser(email: string, password: string, name?: string, role: string = "SHO"): Promise<UserResponse> {
-  const response = await fetch("http://localhost:8000/api/v1/auth/register", {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -49,7 +50,7 @@ export async function registerUser(email: string, password: string, name?: strin
 }
 
 export async function fetchCurrentUser(token: string): Promise<UserResponse> {
-  const response = await fetch("http://localhost:8000/api/v1/auth/me", {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,

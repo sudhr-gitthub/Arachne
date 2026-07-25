@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/services/api/config";
 export interface AIQueryResponse {
   query: string;
   response: string;
@@ -17,7 +18,7 @@ export async function fetchAISummary(nodeId: string, token: string | null): Prom
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch("http://localhost:8000/api/v1/ai/insights/summary", {
+  const response = await fetch(`${API_BASE_URL}/api/v1/ai/insights/summary`, {
     method: "POST",
     headers,
     body: JSON.stringify({ node_id: nodeId }),
@@ -38,7 +39,7 @@ export async function askAIChat(query: string, token: string | null): Promise<AI
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch("http://localhost:8000/api/v1/ai/insights/chat", {
+  const response = await fetch(`${API_BASE_URL}/api/v1/ai/insights/chat`, {
     method: "POST",
     headers,
     body: JSON.stringify({ query }),

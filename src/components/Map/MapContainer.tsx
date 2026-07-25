@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api/config";
+
 
 import React, { useEffect, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
@@ -151,7 +153,7 @@ export default function MapContainer() {
       
       const prompt = `Give brief tactical summary analysis and patrol dispatch recommendations for computed crime hotspot ${zone.id} (Threat level: ${zone.risk_level}) which contains ${zoneMetrics.count} active incidents of type: ${catSummary}. Be extremely concise, output exactly 3 bullet points, using a commanding officer tone.`;
       
-      const res = await fetch("http://localhost:8000/api/v1/ai/insights/chat", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/ai/insights/chat`, {
         method: "POST",
         headers,
         body: JSON.stringify({ prompt })

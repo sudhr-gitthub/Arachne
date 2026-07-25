@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api/config";
+
 
 import React, { useState, useEffect } from "react";
 import { useAppStore } from "@/store/useAppStore";
@@ -62,7 +64,7 @@ export default function DatabaseView() {
     setFormLoading(true);
     setFormMsg(null);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/geo/incidents", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/geo/incidents`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -86,7 +88,7 @@ export default function DatabaseView() {
     setFormLoading(true);
     setFormMsg(null);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/nexus/nodes", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/nexus/nodes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -113,7 +115,7 @@ export default function DatabaseView() {
     setFormLoading(true);
     setFormMsg(null);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/nexus/edges", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/nexus/edges`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -161,7 +163,7 @@ export default function DatabaseView() {
         const description = parts[4] ? parts[4].replace(/"/g, "").trim() : "";
 
         try {
-          const res = await fetch("http://localhost:8000/api/v1/geo/incidents", {
+          const res = await fetch(`${API_BASE_URL}/api/v1/geo/incidents`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

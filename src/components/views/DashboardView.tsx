@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api/config";
+
 
 import React, { useState, useEffect } from "react";
 import { useAppStore } from "@/store/useAppStore";
@@ -28,7 +30,7 @@ export default function DashboardView() {
         const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
         
         // Fetch stats
-        const statsRes = await fetch("http://localhost:8000/api/v1/analytics/dashboard", { headers });
+        const statsRes = await fetch(`${API_BASE_URL}/api/v1/analytics/dashboard`, { headers });
         if (statsRes.ok) {
           const statsData = await statsRes.json();
           setStats(statsData);
@@ -36,7 +38,7 @@ export default function DashboardView() {
 
         // Fetch logs if Commissioner/Admin
         if (role === "Commissioner") {
-          const logsRes = await fetch("http://localhost:8000/api/v1/logs?limit=8", { headers });
+          const logsRes = await fetch(`${API_BASE_URL}/api/v1/logs?limit=8`, { headers });
           if (logsRes.ok) {
             const logsData = await logsRes.json();
             setLogs(logsData);

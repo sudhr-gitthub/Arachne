@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api/config";
+
 
 import React, { useState, useEffect } from "react";
 import { useAppStore, HeaderTab } from "@/store/useAppStore";
@@ -12,7 +14,7 @@ export default function Header() {
   const fetchNotifs = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:8000/api/v1/notifications", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/notifications`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -34,7 +36,7 @@ export default function Header() {
 
   const markAsRead = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/notifications/${id}/read`, {
+      const res = await fetch(`{API_BASE_URL}/api/v1/notifications/${id}/read`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
