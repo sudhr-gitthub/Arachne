@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import L from "leaflet";
-import { MapContainer as LeafletMapContainer, TileLayer, Polygon, useMap, Marker } from "react-leaflet";
+import { MapContainer as LeafletMapContainer, TileLayer, Polygon, Polyline, useMap, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.heat";
-import { Incident, PatrolZone } from "@/services/api/geoApi";
+import { Incident, PatrolZone, Station } from "@/services/api/geoApi";
 import { useAppStore } from "@/store/useAppStore";
-import { useMemo } from "react";
 
 interface HeatLayerCreator {
   heatLayer: (points: number[][], options: Record<string, unknown>) => L.Layer;
@@ -21,13 +20,12 @@ function HeatmapLayer({ incidents }: HeatmapLayerProps) {
   const map = useMap();
 
   useEffect(() => {
-    if (!map) return;
+    if (!map || incidents.length === 0) return;
 
     const points = incidents.map((inc) => [inc.lat, inc.lng]);
 
-    // Cast L using helper interface instead of 'any' to avoid explicit-any warning
     const heatLayer = (L as unknown as HeatLayerCreator).heatLayer(points, {
-      radius: 20,
+      radius: 25,
       blur: 15,
       maxZoom: 17,
       gradient: {
@@ -68,81 +66,103 @@ interface MapRendererProps {
   incidents: Incident[];
   showPredictiveZones: boolean;
   patrolZones: PatrolZone[];
-  showCCTV: boolean;
-  showUnits: boolean;
+  showStations: boolean;
+  stations: Station[];
+  onZoneClick: (zone: PatrolZone) => void;
+  onDistrictSelect: (districtName: string) => void;
+  selectedDistrict: string;
 }
 
-// 15 CCTV Coordinates centered around Bangalore
-const cctvLocations: [number, number][] = [
-  [12.9716, 77.5946],
-  [12.9750, 77.5990],
-  [12.9690, 77.5910],
-  [12.9735, 77.6020],
-  [12.9780, 77.5900],
-  [12.9650, 77.5980],
-  [12.9820, 77.5960],
-  [12.9600, 77.5890],
-  [12.9760, 77.6100],
-  [12.9710, 77.6050],
-  [12.9850, 77.6120],
-  [12.9580, 77.6010],
-  [12.9630, 77.6150],
-  [12.9800, 77.5800],
-  [12.9700, 77.5850],
-];
-
-// 8 Unit Coordinates centered around Bangalore
-const unitLocations: [number, number][] = [
-  [12.9740, 77.5970],
-  [12.9680, 77.5930],
-  [12.9720, 77.6040],
-  [12.9790, 77.5920],
-  [12.9660, 77.6000],
-  [12.9810, 77.5990],
-  [12.9610, 77.5910],
-  [12.9770, 77.6080],
+// 5 Bangalore District Polygons
+const districtBoundaries = [
+  {
+    name: "Central",
+    color: "#06b6d4",
+    coordinates: [[12.955, 77.580], [12.985, 77.580], [12.985, 77.615], [12.955, 77.615]] as [number, number][]
+  },
+  {
+    name: "North",
+    color: "#3b82f6",
+    coordinates: [[12.985, 77.550], [13.030, 77.550], [13.030, 77.625], [12.985, 77.625]] as [number, number][]
+  },
+  {
+    name: "South",
+    color: "#6366f1",
+    coordinates: [[12.910, 77.550], [12.955, 77.550], [12.955, 77.625], [12.910, 77.625]] as [number, number][]
+  },
+  {
+    name: "East",
+    color: "#10b981",
+    coordinates: [[12.930, 77.625], [13.000, 77.625], [13.000, 77.670], [12.930, 77.670]] as [number, number][]
+  },
+  {
+    name: "West",
+    color: "#f59e0b",
+    coordinates: [[12.940, 77.500], [13.000, 77.500], [13.000, 77.550], [12.940, 77.550]] as [number, number][]
+  }
 ];
 
 export default function MapRenderer({
   incidents,
   showPredictiveZones,
   patrolZones,
-  showCCTV,
-  showUnits,
+  showStations,
+  stations,
+  onZoneClick,
+  onDistrictSelect,
+  selectedDistrict
 }: MapRendererProps) {
   const { role } = useAppStore();
 
   const center: [number, number] = useMemo(() => {
-    return role === "Commissioner" ? [12.9716, 77.5946] : [12.9784, 77.6408];
-  }, [role]);
+    return [12.9716, 77.5946];
+  }, []);
 
   const zoom = useMemo(() => {
-    return role === "Commissioner" ? 11 : 14;
-  }, [role]);
-
-  // Create DivIcons safely on client side
-  const cctvIcon = useMemo(() => {
-    return L.divIcon({
-      html: `<div style="width: 10px; height: 10px; background-color: #64748b; border: 1px solid #94a3b8; border-radius: 2px;"></div>`,
-      className: "custom-cctv-icon",
-      iconSize: [10, 10],
-      iconAnchor: [5, 5],
-    });
+    return 12;
   }, []);
 
-  const unitIcon = useMemo(() => {
+  // DivIcons for precinct stations
+  const stationIcon = useMemo(() => {
     return L.divIcon({
       html: `
-        <div style="position: relative; width: 12px; height: 12px;">
-          <div style="position: absolute; top: 0; left: 0; width: 12px; height: 12px; border-radius: 50%; background-color: #3b82f6; opacity: 0.75; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="position: relative; width: 8px; height: 8px; margin: 2px; border-radius: 50%; background-color: #1d4ed8; border: 2px solid #ffffff;"></div>
+        <div style="position: relative; width: 14px; height: 14px; display: flex; items-center; justify-content: center;">
+          <div style="position: absolute; width: 14px; height: 14px; border-radius: 4px; background-color: #3b82f6; border: 1.5px solid #ffffff; box-shadow: 0 0 8px rgba(59,130,246,0.8);"></div>
+          <div style="position: relative; width: 4px; height: 4px; background-color: #ffffff; border-radius: 50%; top: 3.5px;"></div>
         </div>
       `,
-      className: "custom-unit-icon",
-      iconSize: [12, 12],
-      iconAnchor: [6, 6],
+      className: "custom-station-icon",
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
     });
   }, []);
+
+  // DivIcons for individual crime markers
+  const crimeIcon = (category: string) => {
+    const color = 
+      category === "Armed Robbery" ? "#ef4444" :
+      category === "Assault" ? "#f59e0b" :
+      category === "Cyber Fraud" ? "#06b6d4" : "#64748b";
+    
+    return L.divIcon({
+      html: `<div style="width: 8px; height: 8px; background-color: ${color}; border: 1px solid #ffffff; border-radius: 50%; box-shadow: 0 0 5px ${color};"></div>`,
+      className: "custom-crime-icon",
+      iconSize: [8, 8],
+      iconAnchor: [4, 4],
+    });
+  };
+
+  // Helper: compute centroid of a coordinates array
+  const getCentroid = (coords: [number, number][]): [number, number] => {
+    if (!coords || coords.length === 0) return [12.9716, 77.5946];
+    let latSum = 0;
+    let lngSum = 0;
+    coords.forEach(pt => {
+      latSum += pt[0];
+      lngSum += pt[1];
+    });
+    return [latSum / coords.length, lngSum / coords.length];
+  };
 
   return (
     <div className="w-full h-full relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
@@ -157,32 +177,122 @@ export default function MapRenderer({
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
         <MapViewUpdater center={center} zoom={zoom} />
+        
+        {/* Heatmap density layer */}
         <HeatmapLayer incidents={incidents} />
 
+        {/* District Boundaries Overlays */}
+        {districtBoundaries.map((dist) => {
+          const isSelected = selectedDistrict === dist.name;
+          return (
+            <Polygon
+              key={`boundary-${dist.name}`}
+              positions={dist.coordinates}
+              pathOptions={{
+                color: dist.color,
+                weight: isSelected ? 2.5 : 1,
+                fillColor: dist.color,
+                fillOpacity: isSelected ? 0.08 : 0.01,
+                dashArray: isSelected ? undefined : "3, 3"
+              }}
+              eventHandlers={{
+                click: () => onDistrictSelect(dist.name === selectedDistrict ? "All" : dist.name)
+              }}
+            />
+          );
+        })}
+
+        {/* Crime Hotspots */}
         {showPredictiveZones &&
           patrolZones.map((zone) => (
             <Polygon
               key={zone.id}
               positions={zone.coordinates}
               pathOptions={{
-                color: "#ef4444",
+                color: zone.risk_level === "Critical" ? "#ef4444" : "#f59e0b",
                 dashArray: "5, 5",
-                fillColor: "#ef4444",
-                fillOpacity: 0.25,
+                fillColor: zone.risk_level === "Critical" ? "#ef4444" : "#f59e0b",
+                fillOpacity: 0.20,
                 weight: 2,
+              }}
+              eventHandlers={{
+                click: () => onZoneClick(zone)
               }}
             />
           ))}
 
-        {showCCTV &&
-          cctvLocations.map((pos, idx) => (
-            <Marker key={`cctv-${idx}`} position={pos} icon={cctvIcon} />
-          ))}
+        {/* Active Patrol Routes (dotted links connecting nearest stations to hotspot centroids) */}
+        {showPredictiveZones && patrolZones.map((zone) => {
+          const centroid = zone.centroid || getCentroid(zone.coordinates);
+          
+          // Find closest station by distance
+          let closestStation: Station | null = null;
+          let minDistance = Infinity;
+          
+          stations.forEach((st) => {
+            const stLat = 12.9716 + (st.id % 3 === 0 ? 0.015 : st.id % 2 === 0 ? -0.018 : 0.009);
+            const stLng = 77.5946 + (st.id % 3 === 0 ? -0.012 : st.id % 2 === 0 ? 0.021 : -0.008);
+            const dist = Math.sqrt(Math.pow(stLat - centroid[0], 2) + Math.pow(stLng - centroid[1], 2));
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestStation = st;
+            }
+          });
+          
+          let stationPos: [number, number] = [12.9716, 77.5946];
+          if (closestStation) {
+            const stId = (closestStation as Station).id;
+            stationPos = [
+              12.9716 + (stId % 3 === 0 ? 0.015 : stId % 2 === 0 ? -0.018 : 0.009),
+              77.5946 + (stId % 3 === 0 ? -0.012 : stId % 2 === 0 ? 0.021 : -0.008)
+            ];
+          }
+          
+          return (
+            <Polyline
+              key={`route-${zone.id}`}
+              positions={[stationPos, centroid]}
+              pathOptions={{
+                color: "#10b981",
+                weight: 1.5,
+                dashArray: "4, 4",
+                opacity: 0.8
+              }}
+            />
+          );
+        })}
 
-        {showUnits &&
-          unitLocations.map((pos, idx) => (
-            <Marker key={`unit-${idx}`} position={pos} icon={unitIcon} />
-          ))}
+        {/* Police Stations Markers */}
+        {showStations &&
+          stations.map((st) => {
+            // Assign coordinate based on ID index
+            const lat = 12.9716 + (st.id % 3 === 0 ? 0.015 : st.id % 2 === 0 ? -0.018 : 0.009);
+            const lng = 77.5946 + (st.id % 3 === 0 ? -0.012 : st.id % 2 === 0 ? 0.021 : -0.008);
+            return (
+              <Marker key={`station-${st.id}`} position={[lat, lng]} icon={stationIcon}>
+                <Popup>
+                  <div className="font-mono text-[9px] text-slate-800">
+                    <span className="font-bold block uppercase">{st.name}</span>
+                    <span className="text-slate-500 block">Precinct Sector HQ</span>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+
+        {/* Crime Markers */}
+        {incidents.map((inc) => (
+          <Marker key={inc.id} position={[inc.lat, inc.lng]} icon={crimeIcon(inc.category)}>
+            <Popup>
+              <div className="font-mono text-[9px] text-slate-800">
+                <span className="font-bold block text-blue-600 uppercase">{inc.category}</span>
+                <span className="text-slate-500 block">Shift: {inc.time_shift}</span>
+                {inc.description && <p className="mt-1 border-t border-slate-200 pt-1 text-slate-650">{inc.description}</p>}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
       </LeafletMapContainer>
     </div>
   );

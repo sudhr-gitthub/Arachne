@@ -1,18 +1,36 @@
 "use client";
 
 import React from "react";
-import { Map, Network, Database, Settings } from "lucide-react";
+import { Map, Network, Database, Settings, LayoutDashboard, BarChart3, TrendingUp, ClipboardList } from "lucide-react";
 import { useAppStore, SidebarTab } from "@/store/useAppStore";
 
 export default function Sidebar() {
-  const { activeSidebarTab, setActiveSidebarTab } = useAppStore();
+  const { activeSidebarTab, setActiveSidebarTab, user } = useAppStore();
 
   const tabs: { id: SidebarTab; title: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: "Dashboard", title: "Dashboard", icon: LayoutDashboard },
     { id: "Map", title: "Map View", icon: Map },
     { id: "Network", title: "Network Graph", icon: Network },
+    { id: "Analytics", title: "Crime Analytics", icon: BarChart3 },
+    { id: "Predictions", title: "Predictions", icon: TrendingUp },
+    { id: "Reports", title: "Intel Reports", icon: ClipboardList },
     { id: "Database", title: "Database Query", icon: Database },
     { id: "Settings", title: "Settings", icon: Settings },
   ];
+
+  // Derive user initials dynamically
+  const getInitials = () => {
+    if (!user) return "OP";
+    if (user.name) {
+      const parts = user.name.split(" ");
+      const filtered = parts.filter(p => !["Insp.", "SI", "Officer", "Insp", "SI."].includes(p));
+      if (filtered.length > 0) {
+        return filtered.map(n => n[0]).join("").substring(0, 2).toUpperCase();
+      }
+      return parts.map(n => n[0]).join("").substring(0, 2).toUpperCase();
+    }
+    return user.email.substring(0, 2).toUpperCase();
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-16 flex-col items-center justify-between border-r glass-card py-4 text-slate-400">
@@ -31,8 +49,7 @@ export default function Sidebar() {
         </svg>
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex flex-col gap-6">
+      <nav className="flex flex-col gap-4">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeSidebarTab === tab.id;
@@ -55,8 +72,8 @@ export default function Sidebar() {
 
       {/* Profile Placeholder */}
       <div className="relative">
-        <div className="h-10 w-10 rounded-full border border-blue-500/50 bg-slate-800 flex items-center justify-center font-bold text-blue-400 text-sm cursor-pointer hover:border-blue-400 transition-colors">
-          JD
+        <div className="h-10 w-10 rounded-full border border-blue-500/50 bg-slate-800 flex items-center justify-center font-bold text-blue-400 text-sm cursor-pointer hover:border-blue-400 transition-colors uppercase">
+          {getInitials()}
         </div>
         <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-900 bg-green-500" />
       </div>

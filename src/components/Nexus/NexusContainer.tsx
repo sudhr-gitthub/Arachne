@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { GraphPayload, GraphNode, fetchNexusGraph } from "@/services/api/nexusApi";
+import { fetchAISummary } from "@/services/api/aiApi";
+import { useAppStore } from "@/store/useAppStore";
 import GraphRenderer from "./GraphRenderer";
 import { Shield, Phone, Car, FileText, AlertTriangle, Eye, Info, X } from "lucide-react";
 
@@ -57,6 +59,31 @@ export default function NexusContainer() {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorState, setErrorState] = useState<string | null>(null);
+  
+  const { token } = useAppStore();
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!selectedNode) {
+      setAiSummary(null);
+      return;
+    }
+    
+    const nodeId = selectedNode.id;
+    async function loadSummary() {
+      try {
+        setLoadingSummary(true);
+        const data = await fetchAISummary(nodeId, token);
+        setAiSummary(data.summary);
+      } catch {
+        setAiSummary("Tactical gateway connection offline. System cross-reference sweeps log tower logs matching drop point coordinates.");
+      } finally {
+        setLoadingSummary(false);
+      }
+    }
+    loadSummary();
+  }, [selectedNode, token]);
 
   useEffect(() => {
     async function loadData() {
@@ -174,72 +201,84 @@ export default function NexusContainer() {
             </div>
           </div>
 
-          {/* Dynamic Mock Content based on Group type */}
-          {selectedNode.group === 4 ? (
-            <div className="flex flex-col gap-3 text-xs font-mono">
-              <div className="border-t border-slate-800 pt-2">
-                <span className="block text-slate-500 text-[9px] uppercase">CASE REGISTRATION</span>
-                <span className="text-slate-300 font-semibold">{selectedNode.id}-TACTICAL</span>
-              </div>
-              <div>
-                <span className="block text-slate-500 text-[9px] uppercase">OFFENSE</span>
-                <span className="text-slate-300">Contraband smuggling & illegal transit coordination</span>
-              </div>
-              <div>
-                <span className="block text-slate-500 text-[9px] uppercase">INVESTIGATOR</span>
-                <span className="text-slate-300">Inspector A. Sharma (Crime Branch)</span>
-              </div>
-              <div>
-                <span className="block text-slate-500 text-[9px] uppercase">SUMMARY</span>
-                <span className="text-slate-400 text-[11px] leading-relaxed font-sans">
-                  Subject assets were identified during cross-reference sweeps of mobile signal towers near active contraband drop sites. Link mapping shows a recurring communications cluster.
-                </span>
-              </div>
+          {/* Node Metadata Fields */}
+          <div className="flex flex-col gap-3 text-xs font-mono border-t border-slate-800 pt-3">
+            <div>
+              <span className="block text-slate-500 text-[9px] uppercase">NODE ID</span>
+              <span className="text-slate-300">{selectedNode.id}</span>
             </div>
-          ) : (
-            <div className="flex flex-col gap-3 text-xs font-mono">
-              <div className="border-t border-slate-800 pt-2">
-                <span className="block text-slate-500 text-[9px] uppercase">NODE ID</span>
-                <span className="text-slate-300">{selectedNode.id}</span>
+            {selectedNode.group === 1 && (
+              <>
+                <div>
+                  <span className="block text-slate-500 text-[9px] uppercase">STATUS</span>
+                  <span className="text-red-400 font-semibold">Active Suspect</span>
+                </div>
+                <div>
+                  <span className="block text-slate-500 text-[9px] uppercase">ASSOCIATED CHANNELS</span>
+                  <span className="text-slate-300">3 Burner lines, 1 Registered SUV</span>
+                </div>
+              </>
+            )}
+            {selectedNode.group === 2 && (
+              <>
+                <div>
+                  <span className="block text-slate-500 text-[9px] uppercase">CARRIER NETWORK</span>
+                  <span className="text-slate-300">TATA Telecom (Prepaid Burner)</span>
+                </div>
+                <div>
+                  <span className="block text-slate-500 text-[9px] uppercase">SPIKE RATING</span>
+                  <span className="text-amber-400">High call frequency to Sector 08</span>
+                </div>
+              </>
+            )}
+            {selectedNode.group === 3 && (
+              <>
+                <div>
+                  <span className="block text-slate-500 text-[9px] uppercase">ASSET MAKE</span>
+                  <span className="text-slate-300">Black SUV (KA-51-MD-9876)</span>
+                </div>
+                <div>
+                  <span className="block text-slate-500 text-[9px] uppercase">LOG ENTRY</span>
+                  <span className="text-slate-300">Logged 3 times at Toll plaza 8B</span>
+                </div>
+              </>
+            )}
+            {selectedNode.group === 4 && (
+              <>
+                <div>
+                  <span className="block text-slate-500 text-[9px] uppercase">OFFENSE</span>
+                  <span className="text-slate-300">Contraband smuggling & illegal transit coordination</span>
+                </div>
+                <div>
+                  <span className="block text-slate-500 text-[9px] uppercase">INVESTIGATOR</span>
+                  <span className="text-slate-300">Inspector A. Sharma (Crime Branch)</span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* AI Tactical Summary */}
+          <div className="border-t border-slate-800 pt-3 flex flex-col gap-1.5">
+            <span className="block text-blue-400 font-mono text-[9px] uppercase tracking-wider font-bold flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+              AI Tactical Summary
+            </span>
+            {loadingSummary ? (
+              <div className="space-y-1.5 py-1">
+                <div className="h-3 bg-slate-900 rounded animate-pulse w-full" />
+                <div className="h-3 bg-slate-900 rounded animate-pulse w-5/6" />
+                <div className="h-3 bg-slate-900 rounded animate-pulse w-4/5" />
               </div>
-              {selectedNode.group === 1 && (
-                <>
-                  <div>
-                    <span className="block text-slate-500 text-[9px] uppercase">STATUS</span>
-                    <span className="text-red-400 font-semibold">Active Suspect</span>
-                  </div>
-                  <div>
-                    <span className="block text-slate-500 text-[9px] uppercase">ASSOCIATED CHANNELS</span>
-                    <span className="text-slate-300">3 Burner lines, 1 Registered SUV</span>
-                  </div>
-                </>
-              )}
-              {selectedNode.group === 2 && (
-                <>
-                  <div>
-                    <span className="block text-slate-500 text-[9px] uppercase">CARRIER NETWORK</span>
-                    <span className="text-slate-300">TATA Telecom (Prepaid Burner)</span>
-                  </div>
-                  <div>
-                    <span className="block text-slate-500 text-[9px] uppercase">SPIKE RATING</span>
-                    <span className="text-amber-400">High call frequency to Sector 08</span>
-                  </div>
-                </>
-              )}
-              {selectedNode.group === 3 && (
-                <>
-                  <div>
-                    <span className="block text-slate-500 text-[9px] uppercase">ASSET MAKE</span>
-                    <span className="text-slate-300">Black SUV (KA-51-MD-9876)</span>
-                  </div>
-                  <div>
-                    <span className="block text-slate-500 text-[9px] uppercase">LOG ENTRY</span>
-                    <span className="text-slate-300">Logged 3 times at Toll plaza 8B</span>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+            ) : aiSummary ? (
+              <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+                {aiSummary}
+              </p>
+            ) : (
+              <p className="text-[10px] text-slate-500 font-sans">
+                Failed to load tactical summary.
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>

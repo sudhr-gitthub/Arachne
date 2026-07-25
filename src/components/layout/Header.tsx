@@ -1,10 +1,54 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAppStore, HeaderTab } from "@/store/useAppStore";
+import { LogOut, User, Bell, CheckCircle } from "lucide-react";
 
 export default function Header() {
-  const { role, setRole, activeHeaderTab, setActiveHeaderTab } = useAppStore();
+  const { token, user, role, activeHeaderTab, setActiveHeaderTab, logout } = useAppStore();
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+
+  const fetchNotifs = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch("http://localhost:8000/api/v1/notifications", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifs();
+    const interval = setInterval(fetchNotifs, 15000);
+    return () => clearInterval(interval);
+  }, [token]);
+
+  const markAsRead = async (id: string) => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/v1/notifications/${id}/read`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const handleTabClick = (e: React.MouseEvent, tab: HeaderTab) => {
     e.preventDefault();
@@ -45,31 +89,78 @@ export default function Header() {
         </nav>
       </div>
 
-      {/* Right side: RBAC Toggle */}
-      <div className="flex items-center gap-3">
-        <span className="text-xs uppercase tracking-wider text-slate-400">Role:</span>
-        <div className="flex rounded-lg bg-slate-900/80 p-1 border border-slate-700/50">
+      {/* Right side: User Profile & Logout */}
+      <div className="flex items-center gap-4">
+        
+        {/* Notification Bell and Dropdown */}
+        <div className="relative">
           <button
-            onClick={() => setRole("SHO")}
-            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer ${
-              role === "SHO"
-                ? "bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-                : "text-slate-400 hover:text-slate-200"
-            }`}
+            onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+            className="relative p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            title="Notification Center"
           >
-            SHO
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[8px] font-bold text-white shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+                {unreadCount}
+              </span>
+            )}
           </button>
-          <button
-            onClick={() => setRole("Commissioner")}
-            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer ${
-              role === "Commissioner"
-                ? "bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-                : "text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            Commissioner
-          </button>
+
+          {showNotifDropdown && (
+            <div className="absolute right-0 mt-2.5 w-72 rounded-xl border border-slate-800 bg-slate-950/95 shadow-xl glass-card backdrop-blur-md p-4 z-50 text-slate-200 font-mono text-[10px]">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-2 mb-2">
+                <span className="font-bold text-white uppercase tracking-wider">Active Broadcast Alerts</span>
+                <span className="text-[8px] text-slate-500">{notifications.length} total</span>
+              </div>
+              <div className="max-h-56 overflow-y-auto space-y-2.5 scrollbar-thin">
+                {notifications.length === 0 ? (
+                  <p className="text-slate-500 text-center py-4">No active broadcasts logged.</p>
+                ) : (
+                  notifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      onClick={() => !notif.is_read && markAsRead(notif.id)}
+                      className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
+                        notif.is_read
+                          ? "bg-slate-900/30 border-slate-900 text-slate-500"
+                          : "bg-blue-950/10 border-blue-950/40 text-slate-200 hover:border-blue-500/50"
+                      }`}
+                    >
+                      <p className="leading-relaxed">{notif.message}</p>
+                      <div className="flex justify-between items-center mt-1.5 text-[8px] text-slate-500">
+                        <span>{new Date(notif.created_at).toLocaleTimeString()}</span>
+                        {!notif.is_read && (
+                          <span className="text-blue-400 font-bold hover:underline flex items-center gap-0.5">
+                            <CheckCircle className="h-2.5 w-2.5" /> MARK READ
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
+
+        {user && (
+          <div className="flex flex-col text-right font-mono hidden sm:flex">
+            <span className="text-xs font-bold text-slate-200">{user.name || user.email}</span>
+            <span className="text-[9px] uppercase text-blue-400 font-bold tracking-widest">
+              LEVEL: {role}
+            </span>
+          </div>
+        )}
+
+        <button
+          onClick={() => logout()}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/20 bg-red-950/10 hover:bg-red-600 hover:text-white text-red-400 text-xs font-bold font-mono transition-all cursor-pointer"
+          title="Disconnect Node"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          <span className="hidden md:inline">DISCONNECT</span>
+        </button>
       </div>
     </header>
   );

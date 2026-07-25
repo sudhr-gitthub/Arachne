@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./arachne-backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./arachne.db
+      - SECRET_KEY=7d264e1d93bdf5c829e1c258d4a974ea487a55be62db94d1f2a36b56b9c97210
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - backend_data:/app
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:
